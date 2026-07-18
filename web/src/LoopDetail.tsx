@@ -125,22 +125,29 @@ function CampaignPanel({ loop, centers }: { loop: Loop; centers: ConfigCenter[] 
 }
 
 function ConversationPanel({ loop, centers }: { loop: Loop; centers: ConfigCenter[] }) {
-  const withT = [...loop.calls].reverse().find((c) => c.transcript && c.transcript.length > 0);
-  if (!withT?.transcript) return null;
-  const who = withT.target === 'patient'
-    ? 'Patient'
-    : (centers.find((c) => c.id === withT.centerId)?.name ?? 'Imaging center');
-  const active = withT.status !== 'completed' && withT.status !== 'failed';
+  const calls = loop.calls.filter((c) => c.transcript && c.transcript.length > 0);
+  if (calls.length === 0) return null;
   return (
-    <div className="conv" key={withT.id}>
-      <div className="conv-head">📞 Call — {who}{active && <span className="conv-live">live</span>}</div>
-      <div className="conv-body">
-        {withT.transcript.map((t, i) => {
-          const kind = /agent/i.test(t.speaker) ? 'agent' : /system/i.test(t.speaker) ? 'system' : 'other';
+    <div className="conv">
+      <div className="conv-head">📞 Call transcripts</div>
+      <div className="conv-log">
+        {calls.map((call) => {
+          const who = call.target === 'patient'
+            ? 'Patient'
+            : (centers.find((c) => c.id === call.centerId)?.name ?? 'Imaging center');
           return (
-            <div key={i} className={`conv-turn ${kind}`} style={{ animationDelay: `${i * 0.4}s` }}>
-              <span className="conv-speaker">{t.speaker}</span>
-              <span className="conv-text">{t.text}</span>
+            <div className="conv-call" key={call.id}>
+              <div className="conv-call-who">{who}</div>
+              {call.transcript!.map((t, i) => {
+                const kind = /agent/i.test(t.speaker) ? 'agent' : /system/i.test(t.speaker) ? 'system' : 'other';
+                // reveal at ~speaking pace so it reads like a live call, not a data dump
+                return (
+                  <div key={i} className={`conv-turn ${kind}`} style={{ animationDelay: `${i * 1.5}s` }}>
+                    <span className="conv-speaker">{t.speaker}</span>
+                    <span className="conv-text">{t.text}</span>
+                  </div>
+                );
+              })}
             </div>
           );
         })}
