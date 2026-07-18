@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { cancelLoop, type Loop, type ConfigCenter } from './api';
-import { STAGE_ORDER, STATE_LABEL, StateChip, fmtDate, fmtTime, fmtSlot } from './ui';
+import { STAGE_ORDER, STATE_LABEL, StateChip, fmtDate, fmtTime, fmtSlot, humanize } from './ui';
 
 type Tab = 'timeline' | 'transcripts' | 'evidence' | 'fhir';
 
@@ -45,7 +45,7 @@ export function LoopDetail({ loop, centers }: { loop: Loop; centers: ConfigCente
         ))}
       </div>
 
-      {tab === 'timeline' && <TimelineTab loop={loop} />}
+      {tab === 'timeline' && <TimelineTab loop={loop} centers={centers} />}
       {tab === 'transcripts' && <TranscriptsTab loop={loop} centers={centers} />}
       {tab === 'evidence' && <EvidenceTab loop={loop} />}
       {tab === 'fhir' && <FhirTab loop={loop} />}
@@ -178,7 +178,7 @@ function AgentContext({ loop }: { loop: Loop }) {
       <div className="context-grid">
         <div><span className="ck">Order</span><span className="cv">{loop.order?.study.type ?? '—'} · due {fmtDate(loop.order?.urgency.due_date ?? null)}</span></div>
         <div><span className="ck">Linked FHIR</span><span className="cv">ServiceRequest {sr?.id ?? '—'} → Task {task?.businessStatus ?? loop.state}</span></div>
-        <div><span className="ck">Patient</span><span className="cv">{loop.order?.patient.name ?? '—'} · {loop.order?.patient.preferred_language ?? '—'}</span></div>
+        <div><span className="ck">Patient</span><span className="cv">{loop.order?.patient.name ?? '—'} · DOB {loop.order?.patient.dob ?? '—'}</span></div>
         <div><span className="ck">Attempts</span><span className="cv">{centerAttempts} center · {patientAttempts} patient</span></div>
         <div><span className="ck">Source</span><span className="cv">{loop.encounter ? 'Abridge ambient encounter' : 'Signed imaging order'}</span></div>
       </div>
@@ -221,7 +221,7 @@ function GuardrailPanel({ loop }: { loop: Loop }) {
   );
 }
 
-function TimelineTab({ loop }: { loop: Loop }) {
+function TimelineTab({ loop, centers }: { loop: Loop; centers: ConfigCenter[] }) {
   const events = [...loop.timeline].reverse();
   const lastEsc = loop.escalations[loop.escalations.length - 1];
   return (
@@ -242,7 +242,7 @@ function TimelineTab({ loop }: { loop: Loop }) {
                 <div className="tl-time">{fmtTime(e.ts)}</div>
                 <div className="reasoning-card">
                   <div className="reasoning-head">✳ Claude reasoning</div>
-                  <div className="reasoning-body">{e.reasoning}</div>
+                  <div className="reasoning-body">{humanize(e.reasoning, centers)}</div>
                 </div>
               </li>
             );
@@ -251,7 +251,7 @@ function TimelineTab({ loop }: { loop: Loop }) {
             return (
               <li key={e.id} className="tl policy">
                 <div className="tl-time">{fmtTime(e.ts)}</div>
-                <div className="policy-card">⛔ Policy blocked: {e.summary}</div>
+                <div className="policy-card">⛔ Policy blocked: {humanize(e.summary, centers)}</div>
               </li>
             );
           }
@@ -259,7 +259,7 @@ function TimelineTab({ loop }: { loop: Loop }) {
             <li key={e.id} className="tl">
               <div className="tl-time">{fmtTime(e.ts)}</div>
               <div className="tl-main">
-                <div className="tl-summary">{e.summary}</div>
+                <div className="tl-summary">{e.type === 'sms_sent' ? 'Confirmation SMS sent to the patient' : humanize(e.summary, centers)}</div>
                 {e.evidenceRef && (
                   <div className="tl-evidence">
                     “{e.evidenceRef.quote}” <span className="loc">— {e.evidenceRef.location}</span>

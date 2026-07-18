@@ -53,3 +53,7 @@ ANTHROPIC_API_KEY=sk-... ASKRANGER_MODE=mock node server/dist/index.js
 Open http://localhost:8080 and click **"＋ Imaging order"**. `ASKRANGER_MODE=mock` simulates the calls
 (phone-free, deterministic); set `ASKRANGER_MODE=live` with the AskRanger API credentials to place real
 calls through the disclosed voice stack.
+
+## Notes
+- The SMS confirmation step is stubbed (the SMS endpoint is a deferred integration). Every other step —
+  extraction, the imaging-center campaign, the guardrailed patient voice call, and the FHIR booking — runs for real.

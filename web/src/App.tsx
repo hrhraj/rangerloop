@@ -173,7 +173,7 @@ function Hero({ onOrder, onEncounter, creating }: {
             {creating === 'encounter' ? 'Loading…' : 'Start from an Abridge encounter'}
           </button>
         </div>
-        <div className="hero-note">Each click runs the whole loop end-to-end. Imaging-center calls are simulated; the patient is reached by a real voice call.</div>
+        <div className="hero-note">Each click runs the whole loop end-to-end. Imaging-center calls are simulated; the patient is reached by a real voice call. The SMS confirmation step is stubbed.</div>
       </div>
     </div>
   );
