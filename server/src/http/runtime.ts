@@ -1,5 +1,6 @@
 import type { CallEvent, CallOutcome } from '../askranger/types.js';
 import { store as defaultStore } from '../domain/store.js';
+import { reduce } from '../domain/reducer.js';
 import type { CallRecord, Loop } from '../domain/types.js';
 import { ingestOrder as defaultIngestOrder } from '../extraction/ingest.js';
 import { ingestEncounter as defaultIngestEncounter } from '../extraction/ingest.js';
@@ -121,6 +122,18 @@ export class LoopRuntime {
     }
   }
 
+  async cancelLoop(loopId: string): Promise<Loop | undefined> {
+    return await this.#mutexFor(loopId).runExclusive(async () => {
+      const loop = this.store.get(loopId);
+      if (loop === undefined) return undefined;
+      if (loop.state === 'SCHEDULED' || loop.state === 'ESCALATED') return loop;
+      const cancelled = reduce(loop, {
+        type: 'ESCALATED', reason: 'operator_cancelled', context: 'Cancelled by operator',
+      });
+      return this.store.save(cancelled);
+    });
+  }
+
   start(): void {
     if (this.#timer !== undefined) return;
     this.#timer = setInterval(() => {
@@ -138,9 +151,7 @@ export class LoopRuntime {
   }
 
   async #applyTerminal(loopId: string, engineCallId: string, outcome: CallOutcome): Promise<void> {
-    const mutex = this.#mutexes.get(loopId) ?? new AsyncMutex();
-    this.#mutexes.set(loopId, mutex);
-    await mutex.runExclusive(async () => {
+    await this.#mutexFor(loopId).runExclusive(async () => {
       const loop = this.store.get(loopId);
       if (loop === undefined) {
         this.#log(`Ignoring terminal outcome for unknown loop ${loopId}`);
@@ -155,6 +166,14 @@ export class LoopRuntime {
       const step = await onCallOutcome(loop, engineCallId, outcome, this.deps);
       this.store.save(step.loop);
     });
+  }
+
+  #mutexFor(loopId: string): AsyncMutex {
+    const existing = this.#mutexes.get(loopId);
+    if (existing !== undefined) return existing;
+    const mutex = new AsyncMutex();
+    this.#mutexes.set(loopId, mutex);
+    return mutex;
   }
 
   #isTerminal(call: CallRecord): boolean {

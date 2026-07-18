@@ -33,7 +33,7 @@ export interface CallRecord {
 
 export type EscalationReason =
   | 'centers_exhausted' | 'patient_unreachable' | 'extraction_ambiguity'
-  | 'clinical_question' | 'due_date_breach' | 'patient_declined';
+  | 'clinical_question' | 'due_date_breach' | 'patient_declined' | 'operator_cancelled';
 
 export interface Escalation {
   id: string;

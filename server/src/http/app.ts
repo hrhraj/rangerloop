@@ -19,9 +19,16 @@ import { verifySignature } from './signing.js';
 export interface BuildHttpAppOptions {
   runtime: LoopRuntime;
   webhookSecret: string;
+  roster: string[];
   webDistDir?: string;
   logger?: boolean;
 }
+
+const CENTER_NAMES = [
+  'Bayview Imaging Center',
+  'Valley Radiology',
+  'Coastal Diagnostic Group',
+];
 
 function parseJsonBody<T>(body: unknown): T {
   if (typeof body !== 'string') throw new Error('Expected raw JSON body');
@@ -101,6 +108,20 @@ export function buildHttpApp(options: BuildHttpAppOptions): FastifyInstance {
   });
 
   app.get('/api/loops', async () => options.runtime.store.getAll().map(loopSummary));
+
+  app.post<{ Params: { id: string } }>('/api/loops/:id/cancel', async (request, reply) => {
+    const loop = await options.runtime.cancelLoop(request.params.id);
+    return loop === undefined
+      ? await reply.code(404).send({ error: 'loop not found' })
+      : await reply.code(200).send({ loopId: loop.id, state: loop.state });
+  });
+
+  app.get('/api/config', async () => ({
+    centers: options.roster.map((id, index) => ({
+      id,
+      name: CENTER_NAMES[index] ?? `Imaging center ${index + 1}`,
+    })),
+  }));
 
   app.get<{ Params: { id: string } }>('/api/loops/:id', async (request, reply) => {
     const loop = options.runtime.store.get(request.params.id);
@@ -192,6 +213,7 @@ export function createProductionApp(options: {
   const app = buildHttpApp({
     runtime,
     webhookSecret,
+    roster: deps.roster,
     webDistDir,
     ...(options.logger === undefined ? {} : { logger: options.logger }),
   });

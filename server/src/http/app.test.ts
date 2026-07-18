@@ -53,7 +53,11 @@ function testApp() {
   const runtime = new LoopRuntime(deps, {
     webhookSecret: 'test-secret', store, ingestOrder: async () => extractedLoop(),
   });
-  return { app: buildHttpApp({ runtime, webhookSecret: 'test-secret' }), runtime, store };
+  return {
+    app: buildHttpApp({ runtime, webhookSecret: 'test-secret', roster: deps.roster }),
+    runtime,
+    store,
+  };
 }
 
 describe('HTTP app', () => {
@@ -91,6 +95,27 @@ describe('HTTP app', () => {
     expect(full.json<{ id: string }>().id).toBe(body.loopId);
     const missing = await app.inject({ method: 'GET', url: '/api/loops/unknown' });
     expect(missing.statusCode).toBe(404);
+    await app.close();
+  });
+
+  it('cancels an active loop and exposes named center configuration', async () => {
+    const { app, store } = testApp();
+    const loop = extractedLoop();
+    store.save(loop);
+
+    const cancelled = await app.inject({ method: 'POST', url: `/api/loops/${loop.id}/cancel` });
+    expect(cancelled.statusCode).toBe(200);
+    expect(cancelled.json()).toEqual({ loopId: loop.id, state: 'ESCALATED' });
+    expect(store.get(loop.id)?.escalations.at(-1)?.reason).toBe('operator_cancelled');
+
+    const missing = await app.inject({ method: 'POST', url: '/api/loops/unknown/cancel' });
+    expect(missing.statusCode).toBe(404);
+
+    const config = await app.inject({ method: 'GET', url: '/api/config' });
+    expect(config.statusCode).toBe(200);
+    expect(config.json<{ centers: Array<{ id: string; name: string }> }>().centers).toEqual([
+      { id: 'center-a', name: 'Bayview Imaging Center' },
+    ]);
     await app.close();
   });
 });
