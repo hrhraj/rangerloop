@@ -167,7 +167,7 @@ function Hero({ onOrder, onEncounter, creating }: {
             {creating === 'encounter' ? 'Loading…' : 'Start from an Abridge encounter'}
           </button>
         </div>
-        <div className="hero-note">In live mode this places real phone calls to imaging centers and the patient.</div>
+        <div className="hero-note">Each click runs the whole loop end-to-end. Imaging-center calls are simulated; the patient is reached by a real voice call.</div>
       </div>
     </div>
   );
