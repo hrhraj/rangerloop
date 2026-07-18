@@ -21,6 +21,7 @@ export interface BuildHttpAppOptions {
   runtime: LoopRuntime;
   webhookSecret: string;
   roster: string[];
+  mode: 'mock' | 'live' | 'hybrid';
   webDistDir?: string;
   logger?: boolean;
 }
@@ -118,6 +119,7 @@ export function buildHttpApp(options: BuildHttpAppOptions): FastifyInstance {
   });
 
   app.get('/api/config', async () => ({
+    mode: options.mode,
     centers: options.roster.map((id, index) => ({
       id,
       name: CENTER_NAMES[index] ?? `Imaging center ${index + 1}`,
@@ -224,6 +226,7 @@ export function createProductionApp(options: {
     runtime,
     webhookSecret,
     roster: deps.roster,
+    mode,
     webDistDir,
     ...(options.logger === undefined ? {} : { logger: options.logger }),
   });

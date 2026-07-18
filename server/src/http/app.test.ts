@@ -54,7 +54,7 @@ function testApp() {
     webhookSecret: 'test-secret', store, ingestOrder: async () => extractedLoop(),
   });
   return {
-    app: buildHttpApp({ runtime, webhookSecret: 'test-secret', roster: deps.roster }),
+    app: buildHttpApp({ runtime, webhookSecret: 'test-secret', roster: deps.roster, mode: 'mock' }),
     runtime,
     store,
   };
@@ -113,7 +113,12 @@ describe('HTTP app', () => {
 
     const config = await app.inject({ method: 'GET', url: '/api/config' });
     expect(config.statusCode).toBe(200);
-    expect(config.json<{ centers: Array<{ id: string; name: string }> }>().centers).toEqual([
+    const configBody = config.json<{
+      mode: string;
+      centers: Array<{ id: string; name: string }>;
+    }>();
+    expect(configBody.mode).toBe('mock');
+    expect(configBody.centers).toEqual([
       { id: 'center-a', name: 'Bayview Imaging Center' },
     ]);
     await app.close();
