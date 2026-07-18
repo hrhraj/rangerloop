@@ -104,7 +104,9 @@ function CampaignPanel({ loop, centers }: { loop: Loop; centers: ConfigCenter[] 
           } else if (call.reached === 'ivr_deadend') {
             label = 'IVR dead-end'; tone = 'bad';
           } else if (slot?.compliant) {
-            label = 'Booked ✓'; tone = 'good'; slotText = fmtSlot(slot.slotISO);
+            // The center holds a compliant slot; it's only truly "booked" once the
+            // patient confirms and the loop reaches SCHEDULED.
+            label = loop.state === 'SCHEDULED' ? 'Booked ✓' : 'Slot held'; tone = 'good'; slotText = fmtSlot(slot.slotISO);
           } else if (slot && !slot.compliant) {
             label = 'Too late'; tone = 'warn'; slotText = fmtSlot(slot.slotISO); struck = true;
           } else {
