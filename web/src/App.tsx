@@ -35,9 +35,8 @@ export function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState<Creating>(null);
   const [centers, setCenters] = useState<ConfigCenter[]>([]);
-  const [mode, setMode] = useState<string>('');
 
-  useEffect(() => { getConfig().then((c) => { setCenters(c.centers); setMode(c.mode); }).catch(() => {}); }, []);
+  useEffect(() => { getConfig().then((c) => setCenters(c.centers)).catch(() => {}); }, []);
 
   const loops = usePoll<LoopSummary[]>(getLoops, true, 'loops') ?? [];
   const selected = usePoll<Loop>(
@@ -85,19 +84,13 @@ export function App() {
           </button>
         </nav>
         <div className="actions">
-          <button className="btn primary" disabled={creating !== null} onClick={startOrder}>
+          <button className="btn primary" title="Start a loop from a signed imaging order document — RangerLoop extracts the order + due date and runs it" disabled={creating !== null} onClick={startOrder}>
             {creating === 'order' ? 'Starting…' : '＋ Imaging order'}
           </button>
-          <button className="btn" disabled={creating !== null} onClick={startEncounter}>
+          <button className="btn" title="Start a loop from an ambient doctor–patient encounter (Abridge synthetic-FHIR) — the order is spoken in the transcript" disabled={creating !== null} onClick={startEncounter}>
             {creating === 'encounter' ? 'Loading…' : 'Abridge encounter'}
           </button>
         </div>
-        {mode && (
-          <span className={`mode-chip mode-${mode}`}>
-            {mode === 'hybrid' ? 'Live patient call' : mode === 'live' ? 'Live calls' : 'Demo · simulated'}
-          </span>
-        )}
-        <div className="live"><span className="dot" /> live · 2s</div>
       </header>
 
       {view === 'loops' ? (
@@ -166,14 +159,14 @@ function Hero({ onOrder, onEncounter, creating }: {
           ))}
         </div>
         <div className="hero-cta">
-          <button className="btn primary lg" disabled={creating !== null} onClick={onOrder}>
+          <button className="btn primary lg" title="A signed imaging order document — RangerLoop extracts the order + due date and runs the loop" disabled={creating !== null} onClick={onOrder}>
             {creating === 'order' ? 'Starting…' : '＋ Start from an imaging order'}
           </button>
-          <button className="btn lg" disabled={creating !== null} onClick={onEncounter}>
+          <button className="btn lg" title="An ambient doctor–patient encounter (Abridge synthetic-FHIR) — the order is spoken in the transcript, extracted with the clinician's line as evidence" disabled={creating !== null} onClick={onEncounter}>
             {creating === 'encounter' ? 'Loading…' : 'Start from an Abridge encounter'}
           </button>
         </div>
-        <div className="hero-note">Each click runs the whole loop end-to-end. Imaging-center calls are simulated; the patient is reached by a real voice call. The SMS confirmation step is stubbed.</div>
+        <div className="hero-note">Each click runs the whole loop end-to-end. The patient is reached by a real voice call. Imaging-center calls are simulated. An SMS confirmation is sent once complete.</div>
       </div>
     </div>
   );
