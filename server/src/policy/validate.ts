@@ -21,6 +21,7 @@ export function validateAction(
 
   switch (action.type) {
     case 'call_imaging_center':
+      if (hasCompliantSlot) return { ok: false, rejection: 'a compliant slot already exists; do not call more centers' };
       if (!roster.includes(action.centerId)) return { ok: false, rejection: `Unknown imaging center: ${action.centerId}` };
       if (triedCenters.includes(action.centerId)) return { ok: false, rejection: `Imaging center already tried: ${action.centerId}` };
       return { ok: true };

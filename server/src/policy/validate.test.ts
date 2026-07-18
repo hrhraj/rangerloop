@@ -46,4 +46,19 @@ describe('validateAction', () => {
     const loop = { ...createLoop(), state: 'SLOT_FOUND' as const, slots: [compliantSlot] };
     expect(validateAction(loop, { type: 'call_patient', slotIds: ['slot-1'] }, roster)).toEqual({ ok: true });
   });
+
+  it('rejects calling another center after a compliant slot and patient no-answer', () => {
+    const withSlot: Loop = { ...createLoop(), state: 'SLOT_FOUND', slots: [compliantSlot] };
+    const callingPatient = reduce(withSlot, {
+      type: 'PATIENT_CALL_STARTED', callId: 'call-patient', idempotencyKey: 'idem-patient',
+    });
+    const noAnswer = reduce(callingPatient, {
+      type: 'PATIENT_CALL_COMPLETED', callId: 'call-patient', reached: 'no_answer',
+      clinicalQuestion: false, declined: false,
+    });
+    expect(validateAction(noAnswer, { type: 'call_imaging_center', centerId: 'center-2' }, roster)).toEqual({
+      ok: false,
+      rejection: 'a compliant slot already exists; do not call more centers',
+    });
+  });
 });

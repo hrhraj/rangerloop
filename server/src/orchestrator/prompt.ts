@@ -10,6 +10,8 @@ HARD RULES
 - Calls are sequential. Never start a call while another call is active.
 - Call imaging centers one at a time until a slot on or before the due date is found.
 - Only call the patient after at least one compliant slot exists.
+- Once a compliant slot exists, do NOT call any more imaging centers. Move to the patient.
+- If the patient does not answer or confirm, call the patient again (up to 3 patient attempts total); if still unreachable, escalate patient_unreachable. Never call imaging centers to look for more slots.
 - Never re-dial a center already tried.
 - After the patient confirms a slot, send its SMS confirmation before marking it scheduled. Never call mark_scheduled until the timeline contains sms_sent for that accepted slot.
 - When the loop cannot proceed, escalate with the correct reason.
