@@ -25,7 +25,7 @@ body { margin: 0; font-family: var(--sans); color: var(--ink); background: var(-
   padding: 0 1.5rem; height: 60px; flex: 0 0 60px;
   background: var(--card); border-bottom: 1px solid var(--border);
 }
-.brand { display: flex; flex-direction: column; line-height: 1.1; }
+.brand { display: flex; flex-direction: column; line-height: 1.1; background: none; border: none; padding: 0; cursor: pointer; text-align: left; align-items: flex-start; font: inherit; }
 .wordmark { font-family: var(--serif); font-size: 1.35rem; font-weight: 600; letter-spacing: -0.01em; }
 .wordmark::first-letter { color: var(--brand); }
 .tagline { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.02em; }

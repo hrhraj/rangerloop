@@ -27,7 +27,7 @@ function usePoll<T>(fn: () => Promise<T>, enabled: boolean, key: string): T | nu
   return data;
 }
 
-type View = 'loops' | 'escalations';
+type View = 'home' | 'loops' | 'escalations';
 type Creating = 'order' | 'encounter' | null;
 
 export function App() {
@@ -71,10 +71,10 @@ export function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">
+        <button className="brand" onClick={() => setView('home')} title="Home">
           <span className="wordmark">RangerLoop</span>
           <span className="tagline">Closed-loop care execution</span>
-        </div>
+        </button>
         <nav className="nav">
           <button className={view === 'loops' ? 'active' : ''} onClick={() => setView('loops')}>
             Loops <span className="count">{loops.length}</span>
@@ -93,11 +93,10 @@ export function App() {
         </div>
       </header>
 
-      {view === 'loops' ? (
-        loops.length === 0 ? (
-          <Hero onOrder={startOrder} onEncounter={startEncounter} creating={creating} />
-        ) : (
-          <main className="split">
+      {view === 'home' || (view === 'loops' && loops.length === 0) ? (
+        <Hero onOrder={startOrder} onEncounter={startEncounter} creating={creating} />
+      ) : view === 'loops' ? (
+        <main className="split">
             <aside className="board">
               {loops.map((l) => (
                 <button
@@ -121,7 +120,6 @@ export function App() {
               {selected ? <LoopDetail loop={selected} centers={centers} /> : <div className="empty">Select a loop.</div>}
             </section>
           </main>
-        )
       ) : (
         <main className="single">
           <EscalationQueue
@@ -144,7 +142,7 @@ function Hero({ onOrder, onEncounter, creating }: {
     <div className="hero">
       <div className="hero-inner">
         <div className="hero-kicker">CLOSED-LOOP CARE EXECUTION</div>
-        <h1 className="hero-title">Every other agent summarizes. RangerLoop does the job.</h1>
+        <h1 className="hero-title">Ambient AI captures the visit. RangerLoop gets it done.</h1>
         <p className="hero-sub">
           From a signed imaging order to a booked appointment — extracted with evidence, called
           through, guardrailed, and tracked ORDERED → SCHEDULED. Claude decides each next step; a
