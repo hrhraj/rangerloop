@@ -194,3 +194,32 @@ body { margin: 0; font-family: var(--sans); color: var(--ink); background: var(-
 .hp-arrow { color: var(--muted); }
 .hero-cta { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
 .hero-note { margin-top: 1.05rem; font-size: 0.75rem; color: var(--muted); }
+
+/* ---------- extra chip tone ---------- */
+.tone-muted { background: #eef1f4; color: #99a2ad; }
+
+/* ---------- loop head actions + stop ---------- */
+.loop-head-actions { display: flex; align-items: center; gap: 0.6rem; }
+.btn.sm { padding: 0.25rem 0.65rem; font-size: 0.75rem; }
+.btn.danger { border-color: #e6b3ab; color: #c0362c; background: #fff; }
+.btn.danger:hover:not(:disabled) { background: #fdeceb; }
+
+/* ---------- imaging-center campaign ---------- */
+.campaign { margin: 0.5rem 0 0.4rem; }
+.campaign-title { font-size: 0.8rem; font-weight: 700; color: var(--ink-2); margin-bottom: 0.55rem; }
+.campaign-sub { font-weight: 400; color: var(--muted); }
+.campaign-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; }
+.cc { border: 1px solid var(--border); border-radius: 10px; padding: 0.6rem 0.7rem; background: #fff; display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; }
+.cc-active { border-color: #f0c9a8; box-shadow: 0 0 0 3px #fdefdb; }
+.cc-name { font-size: 0.82rem; font-weight: 600; }
+.cc-slot { font-size: 0.72rem; color: var(--ink-2); }
+.cc-slot.struck { text-decoration: line-through; color: var(--muted); }
+
+/* ---------- agent context ---------- */
+.context { border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 0.9rem; background: #fbfcfd; margin-bottom: 1.1rem; }
+.context-title { font-size: 0.85rem; font-weight: 700; }
+.context-sub { font-weight: 400; color: var(--muted); font-size: 0.76rem; }
+.context-grid { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.55rem; }
+.context-grid > div { font-size: 0.82rem; display: flex; gap: 0.5rem; }
+.ck { flex: 0 0 92px; color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.03em; padding-top: 1px; }
+.cv { color: var(--ink); }

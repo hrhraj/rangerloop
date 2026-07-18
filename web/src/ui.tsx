@@ -47,6 +47,15 @@ export function fmtDate(iso: string | null): string {
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+export function fmtSlot(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const datePart = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return /T\d{2}:\d{2}/.test(iso)
+    ? `${datePart}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`
+    : datePart;
+}
+
 export function centerLabel(centerId: string | undefined): string {
   if (!centerId) return 'Imaging center';
   const digits = centerId.replace(/[^\d]/g, '');

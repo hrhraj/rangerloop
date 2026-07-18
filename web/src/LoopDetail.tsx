@@ -1,12 +1,20 @@
 import { useState } from 'react';
-import type { Loop } from './api';
-import { STAGE_ORDER, STATE_LABEL, StateChip, fmtDate, fmtTime } from './ui';
+import { cancelLoop, type Loop, type ConfigCenter } from './api';
+import { STAGE_ORDER, STATE_LABEL, StateChip, fmtDate, fmtTime, fmtSlot } from './ui';
 
 type Tab = 'timeline' | 'evidence' | 'fhir';
 
-export function LoopDetail({ loop }: { loop: Loop }) {
+export function LoopDetail({ loop, centers }: { loop: Loop; centers: ConfigCenter[] }) {
   const [tab, setTab] = useState<Tab>('timeline');
+  const [stopping, setStopping] = useState(false);
   const order = loop.order;
+  const terminal = loop.state === 'SCHEDULED' || loop.state === 'ESCALATED';
+
+  async function stop() {
+    setStopping(true);
+    try { await cancelLoop(loop.id); } catch { /* ignore */ } finally { setStopping(false); }
+  }
+
   return (
     <div className="loop">
       <div className="loop-head">
@@ -16,10 +24,18 @@ export function LoopDetail({ loop }: { loop: Loop }) {
             {order?.study.type ?? 'Imaging order'} · due {fmtDate(order?.urgency.due_date ?? null)}
           </div>
         </div>
-        <StateChip state={loop.state} />
+        <div className="loop-head-actions">
+          {!terminal && (
+            <button className="btn danger sm" disabled={stopping} onClick={stop}>
+              {stopping ? 'Stopping…' : 'Stop'}
+            </button>
+          )}
+          <StateChip state={loop.state} />
+        </div>
       </div>
 
       <Stepper loop={loop} />
+      <CampaignPanel loop={loop} centers={centers} />
 
       <div className="tabs">
         {(['timeline', 'evidence', 'fhir'] as Tab[]).map((t) => (
@@ -51,6 +67,77 @@ function Stepper({ loop }: { loop: Loop }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function CampaignPanel({ loop, centers }: { loop: Loop; centers: ConfigCenter[] }) {
+  if (centers.length === 0) return null;
+  const compliantFound = loop.slots.some((s) => s.compliant);
+  const phaseOver = ['SLOT_FOUND', 'PATIENT_CALLING', 'PATIENT_CONFIRMED', 'SCHEDULED'].includes(loop.state);
+
+  return (
+    <div className="campaign">
+      <div className="campaign-title">
+        Imaging-center campaign <span className="campaign-sub">· the agent works these one at a time</span>
+      </div>
+      <div className="campaign-grid">
+        {centers.map((c) => {
+          const call = loop.calls.find((k) => k.target === 'center' && k.centerId === c.id);
+          const slot = loop.slots.find((s) => s.centerId === c.id);
+          const active = call !== undefined && call.status !== 'completed' && call.status !== 'failed';
+
+          let label = 'Queued';
+          let tone = 'neutral';
+          let slotText: string | null = null;
+          let struck = false;
+
+          if (call === undefined) {
+            if (phaseOver && compliantFound) { label = 'Not needed'; tone = 'muted'; }
+          } else if (active) {
+            label = 'On call'; tone = 'active';
+          } else if (call.reached === 'no_answer') {
+            label = 'No answer'; tone = 'bad';
+          } else if (call.reached === 'voicemail') {
+            label = 'Voicemail'; tone = 'bad';
+          } else if (call.reached === 'ivr_deadend') {
+            label = 'IVR dead-end'; tone = 'bad';
+          } else if (slot?.compliant) {
+            label = 'Booked ✓'; tone = 'good'; slotText = fmtSlot(slot.slotISO);
+          } else if (slot && !slot.compliant) {
+            label = 'Too late'; tone = 'warn'; slotText = fmtSlot(slot.slotISO); struck = true;
+          } else {
+            label = 'No slot'; tone = 'muted';
+          }
+
+          return (
+            <div key={c.id} className={`cc ${active ? 'cc-active' : ''}`}>
+              <div className="cc-name">{c.name}</div>
+              <span className={`chip tone-${tone}`}>{label}</span>
+              {slotText && <div className={`cc-slot ${struck ? 'struck' : ''}`}>{slotText}{struck ? ' · after due date' : ''}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function AgentContext({ loop }: { loop: Loop }) {
+  const centerAttempts = loop.calls.filter((c) => c.target === 'center').length;
+  const patientAttempts = loop.calls.filter((c) => c.target === 'patient').length;
+  const sr = loop.fhir.serviceRequest as { id?: string } | null;
+  const task = loop.fhir.task as { businessStatus?: string } | null;
+  return (
+    <div className="context">
+      <div className="context-title">🧠 Agent context <span className="context-sub">carried across every step</span></div>
+      <div className="context-grid">
+        <div><span className="ck">Order</span><span className="cv">{loop.order?.study.type ?? '—'} · due {fmtDate(loop.order?.urgency.due_date ?? null)}</span></div>
+        <div><span className="ck">Linked FHIR</span><span className="cv">ServiceRequest {sr?.id ?? '—'} → Task {task?.businessStatus ?? loop.state}</span></div>
+        <div><span className="ck">Patient</span><span className="cv">{loop.order?.patient.name ?? '—'} · {loop.order?.patient.preferred_language ?? '—'}</span></div>
+        <div><span className="ck">Attempts</span><span className="cv">{centerAttempts} center · {patientAttempts} patient</span></div>
+        <div><span className="ck">Source</span><span className="cv">{loop.encounter ? 'Abridge ambient encounter' : 'Signed imaging order'}</span></div>
+      </div>
     </div>
   );
 }
@@ -95,6 +182,7 @@ function TimelineTab({ loop }: { loop: Loop }) {
   const lastEsc = loop.escalations[loop.escalations.length - 1];
   return (
     <div className="tab-body">
+      <AgentContext loop={loop} />
       <GuardrailPanel loop={loop} />
       {loop.state === 'ESCALATED' && lastEsc && (
         <div className="banner bad">

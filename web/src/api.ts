@@ -142,6 +142,11 @@ export const getSampleEncounter = () => getJson<unknown>('/api/sample-encounter'
 export const createLoopFromEncounter = (encounter: unknown) =>
   postJson<CreatedLoop>('/api/loops', { encounter });
 
+export interface ConfigCenter { id: string; name: string }
+export const getConfig = () => getJson<{ centers: ConfigCenter[] }>('/api/config');
+export const cancelLoop = (id: string) =>
+  postJson<CreatedLoop>(`/api/loops/${encodeURIComponent(id)}/cancel`, {});
+
 export const DEFAULT_ORDER_TEXT = `MEMORIAL RADIOLOGY ASSOCIATES — IMAGING ORDER
 Date signed: 2026-07-18
 Ordering provider: Dr. Alicia Reyes, Bay Valley Primary Care (callback: 510-555-0148)

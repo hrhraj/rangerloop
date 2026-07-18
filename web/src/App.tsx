@@ -1,8 +1,8 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import {
-  getLoops, getLoop, getEscalations,
+  getLoops, getLoop, getEscalations, getConfig,
   createLoopFromOrder, createLoopFromEncounter, getSampleEncounter, DEFAULT_ORDER_TEXT,
-  type Loop, type LoopSummary, type EscalationRow,
+  type Loop, type LoopSummary, type EscalationRow, type ConfigCenter,
 } from './api';
 import { LoopDetail } from './LoopDetail';
 import { EscalationQueue } from './EscalationQueue';
@@ -34,6 +34,9 @@ export function App() {
   const [view, setView] = useState<View>('loops');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState<Creating>(null);
+  const [centers, setCenters] = useState<ConfigCenter[]>([]);
+
+  useEffect(() => { getConfig().then((c) => setCenters(c.centers)).catch(() => {}); }, []);
 
   const loops = usePoll<LoopSummary[]>(getLoops, true, 'loops') ?? [];
   const selected = usePoll<Loop>(
@@ -116,7 +119,7 @@ export function App() {
               ))}
             </aside>
             <section className="detail">
-              {selected ? <LoopDetail loop={selected} /> : <div className="empty">Select a loop.</div>}
+              {selected ? <LoopDetail loop={selected} centers={centers} /> : <div className="empty">Select a loop.</div>}
             </section>
           </main>
         )
