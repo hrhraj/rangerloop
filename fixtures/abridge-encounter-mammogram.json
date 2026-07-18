@@ -1,0 +1,74 @@
+{
+  "metadata": {
+    "encounter_id": "enc-8f21c7a4",
+    "encounter_date": "2026-07-18",
+    "specialty": "Primary Care",
+    "setting": "Outpatient office visit",
+    "synthetic": true,
+    "format": "synthetic-ambient-fhir"
+  },
+  "patient_context": {
+    "name": "Jordan Whitfield",
+    "sex": "female",
+    "birth_date": "1979-03-22",
+    "phone": "+14088873921",
+    "preferred_language": "English",
+    "chart_background": "47-year-old established patient. Routine screening mammogram 9 days ago read as BI-RADS 0 (incomplete) — radiologist recommended additional imaging of the left breast. No prior breast biopsies. Family history: mother with post-menopausal breast cancer."
+  },
+  "encounter_fhir": {
+    "resourceType": "Bundle",
+    "type": "collection",
+    "entry": [
+      {
+        "resource": {
+          "resourceType": "Patient",
+          "id": "pat-jw-8f21",
+          "name": [{ "text": "Jordan Whitfield" }],
+          "gender": "female",
+          "birthDate": "1979-03-22",
+          "telecom": [{ "system": "phone", "value": "+14088873921" }],
+          "communication": [{ "language": { "text": "English" } }]
+        }
+      },
+      {
+        "resource": {
+          "resourceType": "Encounter",
+          "id": "enc-8f21c7a4",
+          "status": "finished",
+          "class": { "code": "AMB", "display": "ambulatory" },
+          "period": { "start": "2026-07-18T15:30:00Z" },
+          "subject": { "reference": "Patient/pat-jw-8f21" }
+        }
+      },
+      {
+        "resource": {
+          "resourceType": "ServiceRequest",
+          "id": "sr-mammo-8f21",
+          "status": "active",
+          "intent": "order",
+          "priority": "urgent",
+          "code": { "text": "Diagnostic mammogram, left breast" },
+          "bodySite": [{ "text": "Left breast" }],
+          "reasonCode": [{ "text": "Abnormal screening mammogram (BI-RADS 0), additional imaging recommended" }],
+          "occurrenceTiming": { "code": { "text": "Within 2 weeks of order" } },
+          "authoredOn": "2026-07-18",
+          "requester": { "display": "Dr. Alicia Reyes, Bay Valley Primary Care" },
+          "subject": { "reference": "Patient/pat-jw-8f21" }
+        }
+      }
+    ]
+  },
+  "transcript": [
+    { "speaker": "DR", "text": "Hi Jordan, good to see you. Thanks for coming back in so quickly." },
+    { "speaker": "PT", "text": "Of course. I got a call saying the mammogram needed another look? I've been a little anxious about it, honestly." },
+    { "speaker": "DR", "text": "That's completely understandable, and I want to be clear — this is a very common next step. The screening images just weren't complete enough to call one area on the left side, so the radiologist asked for additional pictures." },
+    { "speaker": "PT", "text": "Okay. So what happens now?" },
+    { "speaker": "DR", "text": "So here's the plan — I'm ordering a diagnostic mammogram of the left breast, and I want you to have it done within the next two weeks. My office will help get it scheduled at an imaging center that takes your insurance." },
+    { "speaker": "PT", "text": "Two weeks — okay. Do I need to do anything to set it up?" },
+    { "speaker": "DR", "text": "We'll handle the legwork — someone will reach out with a time and confirm it with you. All you'll need to do is show up. If anything comes back that needs follow-up, we'll talk through it together then." },
+    { "speaker": "PT", "text": "That's a relief. Thank you." },
+    { "speaker": "DR", "text": "You're very welcome. Try not to read too much into the recall — let's just get the clearer pictures and go from there." }
+  ],
+  "note": "Assessment/Plan: 47F with BI-RADS 0 screening mammogram, radiologist recommends additional imaging of the left breast. Ordered diagnostic mammogram, left breast; to be completed within 2 weeks. Office to coordinate scheduling. Reassurance provided regarding recall.",
+  "after_visit_summary": "We are ordering a follow-up (diagnostic) mammogram of your left breast to get clearer pictures. Please plan to have this done within the next two weeks. Our office will call you with an appointment time — you don't need to schedule it yourself."
+}

@@ -1,0 +1,22 @@
+# Secrets — NEVER commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Node
+node_modules
+**/node_modules
+dist
+**/dist
+web/dist
+**/*.tsbuildinfo
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+.vscode
+.idea
+*.log
+tmp
