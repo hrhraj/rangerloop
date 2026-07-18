@@ -15,9 +15,9 @@ export type LoopAction =
   | { type: 'ORDER_EXTRACTED'; order: ExtractedOrder; serviceRequest: ServiceRequest; patient: Patient }
   | { type: 'NEEDS_REVIEW'; reasons: string[] }
   | { type: 'CENTER_CALL_STARTED'; centerId: string; callId: string; idempotencyKey: string }
-  | { type: 'CENTER_CALL_COMPLETED'; centerId: string; callId: string; reached: NonNullable<Loop['calls'][number]['reached']>; slot?: FoundSlot }
+  | { type: 'CENTER_CALL_COMPLETED'; centerId: string; callId: string; reached: NonNullable<Loop['calls'][number]['reached']>; slot?: FoundSlot; transcript?: { speaker: string; text: string }[] }
   | { type: 'PATIENT_CALL_STARTED'; callId: string; idempotencyKey: string }
-  | { type: 'PATIENT_CALL_COMPLETED'; callId: string; reached: NonNullable<Loop['calls'][number]['reached']>; acceptedSlotId?: string; clinicalQuestion: boolean; declined: boolean }
+  | { type: 'PATIENT_CALL_COMPLETED'; callId: string; reached: NonNullable<Loop['calls'][number]['reached']>; acceptedSlotId?: string; clinicalQuestion: boolean; declined: boolean; transcript?: { speaker: string; text: string }[] }
   | { type: 'SMS_SENT'; messageId: string; slotId: string }
   | { type: 'INBOUND_ARMED'; expectationId: string }
   | { type: 'CALL_LINKED'; callId: string; externalCallId: string }
@@ -157,7 +157,10 @@ export function reduce(loop: Loop, action: LoopAction): Loop {
         state,
         fhir: { ...loop.fhir, task: withTask(loop.fhir.task, state, taskStatus, now) },
         calls: loop.calls.map((call) => call.id === action.callId
-          ? { ...call, status: 'completed', reached: action.reached, endedAt: now }
+          ? {
+              ...call, status: 'completed', reached: action.reached, endedAt: now,
+              ...(action.transcript === undefined ? {} : { transcript: action.transcript }),
+            }
           : call),
         slots,
         timeline: [
@@ -214,7 +217,10 @@ export function reduce(loop: Loop, action: LoopAction): Loop {
         state,
         fhir: { ...loop.fhir, task: withTask(loop.fhir.task, state, taskStatus, now) },
         calls: loop.calls.map((call) => call.id === action.callId
-          ? { ...call, status: 'completed', reached: action.reached, endedAt: now }
+          ? {
+              ...call, status: 'completed', reached: action.reached, endedAt: now,
+              ...(action.transcript === undefined ? {} : { transcript: action.transcript }),
+            }
           : call),
         escalations: escalation === undefined ? loop.escalations : [...loop.escalations, escalation],
         timeline: [

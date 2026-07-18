@@ -25,7 +25,7 @@ export class DemoMockClient implements AskRangerClient {
   }) {
     this.#callbackUrl = options.callbackUrl;
     this.#webhookSecret = options.webhookSecret;
-    this.#deliverDelayMs = options.deliverDelayMs ?? 1_500;
+    this.#deliverDelayMs = options.deliverDelayMs ?? 3_500;
     this.#dueOffsetDays = options.dueOffsetDays ?? 3;
   }
 
@@ -74,7 +74,12 @@ export class DemoMockClient implements AskRangerClient {
     if (target === 'center' && typeof loopId === 'string' && typeof centerId === 'string') {
       if (centerId.includes('no-answer')) {
         reached = 'no_answer';
-        captured = {};
+        captured = {
+          transcript: [
+            { speaker: 'Agent', text: 'Calling the imaging center to request a scheduling appointment.' },
+            { speaker: 'System', text: 'No answer - went to voicemail.' },
+          ],
+        };
       } else if (centerId.includes('noncompliant')) {
         const dueDate = req.metadata?.dueDate;
         const date = typeof dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dueDate)
@@ -82,17 +87,49 @@ export class DemoMockClient implements AskRangerClient {
           : new Date();
         date.setUTCDate(date.getUTCDate() + (typeof dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? 14 : 45));
         const earliestSlot = date.toISOString().slice(0, 10);
-        captured = { earliest_slot: earliestSlot, fax_needed: false, reference_number: `REF${sequence}` };
+        captured = {
+          earliest_slot: earliestSlot,
+          fax_needed: false,
+          reference_number: `REF${sequence}`,
+          transcript: [
+            { speaker: 'Agent', text: 'I am calling to schedule physician-ordered follow-up imaging within the next two weeks.' },
+            { speaker: 'Imaging center', text: `Our earliest available appointment is ${earliestSlot}.` },
+            { speaker: 'Agent', text: 'That is past the requested due date, so I will try another imaging center.' },
+            { speaker: 'Imaging center', text: 'Understood. Please call back if another date is needed.' },
+          ],
+        };
       } else {
         const date = new Date();
         date.setUTCDate(date.getUTCDate() + this.#dueOffsetDays);
         const earliestSlot = date.toISOString().slice(0, 10);
         this.#slotByLoop.set(loopId, `${centerId}:${earliestSlot}`);
-        captured = { earliest_slot: earliestSlot, fax_needed: false, reference_number: `REF${sequence}` };
+        captured = {
+          earliest_slot: earliestSlot,
+          fax_needed: false,
+          reference_number: `REF${sequence}`,
+          transcript: [
+            { speaker: 'Agent', text: 'I am calling to schedule physician-ordered follow-up imaging. What is your earliest opening?' },
+            { speaker: 'Imaging center', text: `We have an opening on ${earliestSlot}.` },
+            { speaker: 'Agent', text: 'Please hold that appointment while I confirm it with the patient.' },
+            { speaker: 'Imaging center', text: `It is on hold. Your reference number is REF${sequence}.` },
+            { speaker: 'Agent', text: 'Thank you. I have noted the appointment and reference number.' },
+          ],
+        };
       }
     } else {
       const accepted = typeof loopId === 'string' ? this.#slotByLoop.get(loopId) ?? '' : '';
-      captured = { identity_verified: true, accepted_slot: accepted };
+      captured = {
+        identity_verified: true,
+        accepted_slot: accepted,
+        transcript: [
+          { speaker: 'Agent', text: "Hello, I am calling on behalf of your provider's office about scheduling your ordered imaging." },
+          { speaker: 'Agent', text: 'Before we discuss the appointment, please state your full date of birth.' },
+          { speaker: 'Patient', text: 'March 22, 1979.' },
+          { speaker: 'Agent', text: `Thank you, your identity is verified. I can offer the appointment ${accepted}.` },
+          { speaker: 'Patient', text: 'Yes, that works for me.' },
+          { speaker: 'Agent', text: 'You are confirmed. I will send the appointment details by text.' },
+        ],
+      };
     }
     const outcome: CallOutcome = {
       reached,

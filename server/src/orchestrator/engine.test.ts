@@ -79,12 +79,17 @@ describe('orchestrator engine', () => {
     const centerStarted = await advance(extractedLoop(), orchestratorDeps);
     const patientStarted = await completeCenter(centerStarted, orchestratorDeps, {
       earliest_slot: slotISO, fax_needed: false, reference_number: 'BAY-4471',
+      transcript: [{ speaker: 'Imaging center', text: 'That appointment is available.' }],
     });
     if (patientStarted.result.status !== 'awaiting_call') throw new Error('Expected an awaiting patient call');
     const finished = await onCallOutcome(
       patientStarted.loop,
       patientStarted.result.callId,
-      outcome({ identity_verified: true, accepted_slot: slotISO }),
+      outcome({
+        identity_verified: true,
+        accepted_slot: slotISO,
+        transcript: [{ speaker: 'Patient', text: 'Yes, that appointment works.' }],
+      }),
       orchestratorDeps,
     );
 
@@ -93,6 +98,9 @@ describe('orchestrator engine', () => {
     expect(finished.loop.fhir.appointment?.status).toBe('booked');
     expect(finished.loop.fhir.appointment?.start).toBe(slotISO);
     expect(finished.loop.timeline.map(({ type }) => type)).toContain('sms_sent');
+    expect(finished.loop.calls.map(({ transcript }) => transcript?.[0]?.speaker)).toEqual([
+      'Imaging center', 'Patient',
+    ]);
     expect(client.placeCallRequests.map(({ calleeType }) => calleeType)).toEqual(['business', 'person']);
   });
 

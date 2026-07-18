@@ -70,6 +70,19 @@ function escalate(loop: Loop, reason: EscalationReason, context: string): Orches
   return { loop: escalated, result: { status: 'escalated', reason } };
 }
 
+function capturedTranscript(outcome: CallOutcome): { speaker: string; text: string }[] | undefined {
+  const value = outcome.captured.transcript;
+  if (!Array.isArray(value)) return undefined;
+  const turns: { speaker: string; text: string }[] = [];
+  for (const turn of value) {
+    if (typeof turn !== 'object' || turn === null || Array.isArray(turn)) return undefined;
+    const record = turn as Record<string, unknown>;
+    if (typeof record.speaker !== 'string' || typeof record.text !== 'string') return undefined;
+    turns.push({ speaker: record.speaker, text: record.text });
+  }
+  return turns;
+}
+
 async function executeAction(
   loop: Loop,
   action: OrchestratorAction,
@@ -217,15 +230,18 @@ export async function onCallOutcome(
   if (call.target === 'center') {
     if (call.centerId === undefined) throw new Error(`orchestrator: center call ${callId} has no centerId`);
     const interpreted = interpretCenterOutcome(outcome, call.centerId, dueDateISO(loop));
+    const transcript = capturedTranscript(outcome);
     current = reduce(loop, {
       type: 'CENTER_CALL_COMPLETED',
       centerId: call.centerId,
       callId,
       reached: interpreted.reached,
       ...(interpreted.slot === undefined ? {} : { slot: interpreted.slot }),
+      ...(transcript === undefined ? {} : { transcript }),
     });
   } else {
     const interpreted = interpretPatientOutcome(outcome);
+    const transcript = capturedTranscript(outcome);
     current = reduce(loop, {
       type: 'PATIENT_CALL_COMPLETED',
       callId,
@@ -233,6 +249,7 @@ export async function onCallOutcome(
       ...(interpreted.acceptedSlotId === undefined ? {} : { acceptedSlotId: interpreted.acceptedSlotId }),
       clinicalQuestion: interpreted.clinicalQuestion,
       declined: interpreted.declined,
+      ...(transcript === undefined ? {} : { transcript }),
     });
     if (interpreted.declined) return escalate(current, 'patient_declined', 'patient declined');
   }

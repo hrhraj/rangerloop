@@ -26,6 +26,7 @@ export interface CallRecord {
   guardrail?: { profile: string | null; violations: string[]; flags: string[] };
   transcriptUrl?: string;
   recordingUrl?: string;
+  transcript?: { speaker: string; text: string }[];
   summary?: string;
   startedAt: string;
   endedAt?: string;
