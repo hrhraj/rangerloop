@@ -16,6 +16,7 @@ import type { OrchestratorDeps } from '../orchestrator/engine.js';
 import { buildCenterPrompt, buildPatientPrompt } from '../orchestrator/prompt.js';
 import { LoopRuntime } from './runtime.js';
 import { verifySignature } from './signing.js';
+import { seedDemoLoops } from '../domain/seed.js';
 
 export interface BuildHttpAppOptions {
   runtime: LoopRuntime;
@@ -222,6 +223,7 @@ export function createProductionApp(options: {
     ...(patientPhoneOverride === undefined ? {} : { patientPhoneOverride }),
   };
   const runtime = new LoopRuntime(deps, { webhookSecret });
+  seedDemoLoops(runtime.store);
   const app = buildHttpApp({
     runtime,
     webhookSecret,

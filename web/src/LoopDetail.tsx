@@ -4,6 +4,26 @@ import { STAGE_ORDER, STATE_LABEL, StateChip, fmtDate, fmtTime, fmtSlot, humaniz
 
 type Tab = 'timeline' | 'transcripts' | 'evidence' | 'fhir';
 
+const ESC_LABEL: Record<string, string> = {
+  operator_cancelled: 'cancelled by operator',
+  patient_unreachable: 'patient unreachable',
+  centers_exhausted: 'no compliant slot (centers exhausted)',
+  patient_declined: 'patient declined',
+  due_date_breach: 'past the due date',
+  extraction_ambiguity: 'needs review',
+  clinical_question: 'clinical question raised',
+};
+
+function escalationText(esc: { reason: string; context: string }): string {
+  const label = ESC_LABEL[esc.reason] ?? esc.reason.replace(/_/g, ' ');
+  const ctx = (esc.context ?? '').trim();
+  const redundant = ctx === ''
+    || ctx.toLowerCase() === label.toLowerCase()
+    || label.toLowerCase().includes(ctx.toLowerCase())
+    || ctx.toLowerCase().includes(label.toLowerCase());
+  return redundant ? label : `${label} — ${ctx}`;
+}
+
 export function LoopDetail({ loop, centers }: { loop: Loop; centers: ConfigCenter[] }) {
   const [tab, setTab] = useState<Tab>('timeline');
   const [stopping, setStopping] = useState(false);
@@ -232,7 +252,7 @@ function TimelineTab({ loop, centers }: { loop: Loop; centers: ConfigCenter[] })
       <GuardrailPanel loop={loop} />
       {loop.state === 'ESCALATED' && lastEsc && (
         <div className="banner bad">
-          Escalated — {lastEsc.reason.replace(/_/g, ' ')}: {lastEsc.context}
+          Escalated — {escalationText(lastEsc)}
         </div>
       )}
       <ol className="timeline">

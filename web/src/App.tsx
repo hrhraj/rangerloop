@@ -142,7 +142,7 @@ function Hero({ onOrder, onEncounter, creating }: {
     <div className="hero">
       <div className="hero-inner">
         <div className="hero-kicker">CLOSED-LOOP CARE EXECUTION</div>
-        <h1 className="hero-title">Ambient AI captures the visit. RangerLoop gets it done.</h1>
+        <h1 className="hero-title">Ambient AI captures the visit.<br />RangerLoop gets it done.</h1>
         <p className="hero-sub">
           From a signed imaging order to a booked appointment — extracted with evidence, called
           through, guardrailed, and tracked ORDERED → SCHEDULED. Claude decides each next step; a
