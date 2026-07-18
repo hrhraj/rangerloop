@@ -77,12 +77,18 @@ If asked whether you are an AI, answer truthfully: "Yes, I'm an automated schedu
 
 export function buildPatientPrompt(loop: Loop, slotIds: string[]): string {
   const patient = loop.order?.patient;
+  const dob = patient?.dob;
   const offered = loop.slots.filter(({ id, compliant }) => compliant && slotIds.includes(id) && id.length > 0);
   const slotList = offered.map(({ id, slotISO, centerId }) => `${id}: ${slotISO} at ${centerId}`).join('; ');
   const provider = loop.order?.ordering_provider.name ?? 'the ordering provider';
+  const identityInstructions = dob === null || dob === undefined
+    ? `There is no date of birth on file to check. Verify the patient's full name and confirm they are expecting a call about their doctor's imaging order. Proceed cautiously, and do not reveal any identity information yourself.`
+    : `The date of birth on file is ${dob}. Ask the patient to state their full date of birth and compare it to the one on file. Do NOT say the date yourself or read it aloud. If it does not match, ask once more; if it still does not match, do not share any appointment details or slots - apologize that you can't verify their identity and end the call. Only offer slots after the stated date of birth matches.`;
   return `Call ${patient?.name ?? 'the patient'} on behalf of ${provider}'s office about scheduling follow-up imaging their doctor ordered.
 
-First verify identity by asking the patient to state their date of birth. Do not reveal the DOB. After identity is verified, offer only these compliant slots: ${slotList || 'none supplied'}.
+${identityInstructions}
+
+After identity is verified, offer only these compliant slots: ${slotList || 'none supplied'}.
 
 If the patient asks any clinical question, say: "That's an important question for the clinic; I'm only able to help with scheduling. I'll flag it for them." Then continue scheduling if the patient agrees.
 

@@ -69,19 +69,33 @@ export class DemoMockClient implements AskRangerClient {
     const loopId = req.metadata?.loopId;
     const target = req.metadata?.target;
     const centerId = req.metadata?.centerId;
+    let reached: CallOutcome['reached'] = 'human';
     let captured: Record<string, unknown>;
     if (target === 'center' && typeof loopId === 'string' && typeof centerId === 'string') {
-      const date = new Date();
-      date.setUTCDate(date.getUTCDate() + this.#dueOffsetDays);
-      const earliestSlot = date.toISOString().slice(0, 10);
-      this.#slotByLoop.set(loopId, `${centerId}:${earliestSlot}`);
-      captured = { earliest_slot: earliestSlot, fax_needed: false, reference_number: `REF${sequence}` };
+      if (centerId.includes('no-answer')) {
+        reached = 'no_answer';
+        captured = {};
+      } else if (centerId.includes('noncompliant')) {
+        const dueDate = req.metadata?.dueDate;
+        const date = typeof dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dueDate)
+          ? new Date(`${dueDate}T00:00:00.000Z`)
+          : new Date();
+        date.setUTCDate(date.getUTCDate() + (typeof dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? 14 : 45));
+        const earliestSlot = date.toISOString().slice(0, 10);
+        captured = { earliest_slot: earliestSlot, fax_needed: false, reference_number: `REF${sequence}` };
+      } else {
+        const date = new Date();
+        date.setUTCDate(date.getUTCDate() + this.#dueOffsetDays);
+        const earliestSlot = date.toISOString().slice(0, 10);
+        this.#slotByLoop.set(loopId, `${centerId}:${earliestSlot}`);
+        captured = { earliest_slot: earliestSlot, fax_needed: false, reference_number: `REF${sequence}` };
+      }
     } else {
       const accepted = typeof loopId === 'string' ? this.#slotByLoop.get(loopId) ?? '' : '';
       captured = { identity_verified: true, accepted_slot: accepted };
     }
     const outcome: CallOutcome = {
-      reached: 'human',
+      reached,
       captured,
       guardrail: { profile: 'healthcare_scheduling', violations: [], flags: [] },
     };

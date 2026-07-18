@@ -190,7 +190,7 @@ export function createProductionApp(options: {
       allowDeferredEndpointStubs: process.env.ALLOW_DEFERRED_ENDPOINT_STUBS === '1',
     });
   } else {
-    roster = ['imaging-center-a', 'imaging-center-b'];
+    roster = ['center-noncompliant', 'center-no-answer', 'center-compliant'];
     client = new DemoMockClient({ callbackUrl, webhookSecret });
   }
 

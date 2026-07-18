@@ -93,7 +93,13 @@ async function executeAction(
         guardrailProfile: deps.guardrailProfile,
         calleeType: 'business',
         callerIdentity: deps.callerIdentity,
-        metadata: { loopId: loop.id, callId, target: 'center', centerId: action.centerId },
+        metadata: {
+          loopId: loop.id,
+          callId,
+          target: 'center',
+          centerId: action.centerId,
+          dueDate: dueDateISO(loop),
+        },
       });
       started = reduce(started, { type: 'CALL_LINKED', callId, externalCallId: placed.callId });
       return { loop: started, result: { status: 'awaiting_call', callId } };
