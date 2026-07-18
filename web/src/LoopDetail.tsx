@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { cancelLoop, type Loop, type ConfigCenter } from './api';
 import { STAGE_ORDER, STATE_LABEL, StateChip, fmtDate, fmtTime, fmtSlot } from './ui';
 
-type Tab = 'timeline' | 'evidence' | 'fhir';
+type Tab = 'timeline' | 'transcripts' | 'evidence' | 'fhir';
 
 export function LoopDetail({ loop, centers }: { loop: Loop; centers: ConfigCenter[] }) {
   const [tab, setTab] = useState<Tab>('timeline');
@@ -36,17 +36,17 @@ export function LoopDetail({ loop, centers }: { loop: Loop; centers: ConfigCente
 
       <Stepper loop={loop} />
       <CampaignPanel loop={loop} centers={centers} />
-      <ConversationPanel loop={loop} centers={centers} />
 
       <div className="tabs">
-        {(['timeline', 'evidence', 'fhir'] as Tab[]).map((t) => (
+        {(['timeline', 'transcripts', 'evidence', 'fhir'] as Tab[]).map((t) => (
           <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>
-            {t === 'timeline' ? 'Timeline' : t === 'evidence' ? 'Evidence' : 'FHIR'}
+            {t === 'timeline' ? 'Timeline' : t === 'transcripts' ? 'Transcripts' : t === 'evidence' ? 'Evidence' : 'FHIR'}
           </button>
         ))}
       </div>
 
       {tab === 'timeline' && <TimelineTab loop={loop} />}
+      {tab === 'transcripts' && <TranscriptsTab loop={loop} centers={centers} />}
       {tab === 'evidence' && <EvidenceTab loop={loop} />}
       {tab === 'fhir' && <FhirTab loop={loop} />}
     </div>
@@ -120,6 +120,17 @@ function CampaignPanel({ loop, centers }: { loop: Loop; centers: ConfigCenter[] 
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function TranscriptsTab({ loop, centers }: { loop: Loop; centers: ConfigCenter[] }) {
+  const has = loop.calls.some((c) => c.transcript && c.transcript.length > 0);
+  return (
+    <div className="tab-body">
+      {has
+        ? <ConversationPanel loop={loop} centers={centers} />
+        : <div className="empty">No call transcripts yet. (Live patient calls happen by voice, not text.)</div>}
     </div>
   );
 }
