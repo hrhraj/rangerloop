@@ -5,7 +5,7 @@ encounter) → extract the action + due date (evidence-linked) → call imaging 
 slot → call the patient to confirm & book (guardrailed, never discloses results) → track
 ORDERED → SCHEDULED → escalate safely on failure.
 
-> Every other agent summarizes or suggests. RangerLoop does the job.
+> Ambient AI captures the visit. RangerLoop gets it done.
 
 **Live demo:** https://rangerloop-api.fly.dev — click **"＋ Imaging order"** or **"Abridge encounter"**
 and watch a full loop run. The hosted demo runs in simulation mode, so it's phone-free and safe to click.
