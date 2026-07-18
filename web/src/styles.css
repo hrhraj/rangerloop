@@ -177,7 +177,9 @@ body { margin: 0; font-family: var(--sans); color: var(--ink); background: var(-
 
 /* ---------- actions + buttons ---------- */
 .actions { margin-left: auto; display: flex; gap: 0.5rem; }
-.live { margin-left: 1rem; }
+.live { margin-left: 0.9rem; }
+.mode-chip { margin-left: 0.9rem; font-size: 0.68rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; background: #eef1f9; color: #3a4a6b; }
+.mode-chip.mode-hybrid, .mode-chip.mode-live { background: #e2f5ec; color: #0f7a53; }
 .btn { border: 1px solid var(--border-strong); background: #fff; color: var(--ink); padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 600; }
 .btn:hover:not(:disabled) { background: #f5f6f8; }
 .btn:disabled { opacity: 0.55; cursor: default; }

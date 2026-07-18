@@ -144,7 +144,7 @@ export const createLoopFromEncounter = (encounter: unknown) =>
   postJson<CreatedLoop>('/api/loops', { encounter });
 
 export interface ConfigCenter { id: string; name: string }
-export const getConfig = () => getJson<{ centers: ConfigCenter[] }>('/api/config');
+export const getConfig = () => getJson<{ mode: string; centers: ConfigCenter[] }>('/api/config');
 export const cancelLoop = (id: string) =>
   postJson<CreatedLoop>(`/api/loops/${encodeURIComponent(id)}/cancel`, {});
 

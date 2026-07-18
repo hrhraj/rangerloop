@@ -35,8 +35,9 @@ export function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState<Creating>(null);
   const [centers, setCenters] = useState<ConfigCenter[]>([]);
+  const [mode, setMode] = useState<string>('');
 
-  useEffect(() => { getConfig().then((c) => setCenters(c.centers)).catch(() => {}); }, []);
+  useEffect(() => { getConfig().then((c) => { setCenters(c.centers); setMode(c.mode); }).catch(() => {}); }, []);
 
   const loops = usePoll<LoopSummary[]>(getLoops, true, 'loops') ?? [];
   const selected = usePoll<Loop>(
@@ -91,6 +92,11 @@ export function App() {
             {creating === 'encounter' ? 'Loading…' : 'Abridge encounter'}
           </button>
         </div>
+        {mode && (
+          <span className={`mode-chip mode-${mode}`}>
+            {mode === 'hybrid' ? 'Live patient call' : mode === 'live' ? 'Live calls' : 'Demo · simulated'}
+          </span>
+        )}
         <div className="live"><span className="dot" /> live · 2s</div>
       </header>
 
