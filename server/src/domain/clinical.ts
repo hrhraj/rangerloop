@@ -98,9 +98,15 @@ export function interpretPatientOutcome(outcome: CallOutcome): {
   declined: boolean;
 } {
   const acceptedSlot = outcome.captured.accepted_slot;
+  const identityVerified = outcome.captured.identity_verified === true;
+  const confirmedSlot = identityVerified
+    && typeof acceptedSlot === 'string'
+    && acceptedSlot.trim() !== ''
+    ? acceptedSlot
+    : undefined;
   return {
     reached: outcome.reached,
-    ...(typeof acceptedSlot === 'string' ? { acceptedSlotId: acceptedSlot } : {}),
+    ...(confirmedSlot === undefined ? {} : { acceptedSlotId: confirmedSlot }),
     clinicalQuestion: outcome.guardrail.flags.includes('question_outside_scope')
       || outcome.captured.asked_clinical_question === true,
     declined: outcome.captured.declined === true,

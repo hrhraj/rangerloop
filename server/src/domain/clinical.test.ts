@@ -54,12 +54,30 @@ describe('clinical interpretation', () => {
   });
 
   it('interprets patient confirmation', () => {
-    expect(interpretPatientOutcome(callOutcome({ captured: { accepted_slot: '2026-07-21T10:30:00Z' } }))).toEqual({
+    expect(interpretPatientOutcome(callOutcome({
+      captured: { identity_verified: true, accepted_slot: 'center-x:2026-07-21' },
+    }))).toEqual({
       reached: 'human',
-      acceptedSlotId: '2026-07-21T10:30:00Z',
+      acceptedSlotId: 'center-x:2026-07-21',
       clinicalQuestion: false,
       declined: false,
     });
+  });
+
+  it('does not confirm an accepted slot without verified identity', () => {
+    const interpreted = interpretPatientOutcome(callOutcome({
+      captured: { identity_verified: null, accepted_slot: 'center-x:2026-07-21' },
+    }));
+    expect(interpreted.acceptedSlotId).toBeUndefined();
+  });
+
+  it('does not confirm a blank or missing accepted slot', () => {
+    const blank = interpretPatientOutcome(callOutcome({
+      captured: { identity_verified: true, accepted_slot: '' },
+    }));
+    const missing = interpretPatientOutcome(callOutcome({ captured: { identity_verified: true } }));
+    expect(blank.acceptedSlotId).toBeUndefined();
+    expect(missing.acceptedSlotId).toBeUndefined();
   });
 
   it('interprets a patient clinical question from flags or captured data', () => {
