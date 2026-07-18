@@ -24,6 +24,7 @@ describe('patient scheduling prompt', () => {
     expect(prompt).toContain('The date of birth on file is 1979-03-22');
     expect(prompt).toContain('Do NOT say the date yourself or read it aloud');
     expect(prompt).toContain('Only offer slots after the stated date of birth matches');
+    expect(prompt).toContain('Say ONE short turn at a time, then STOP and WAIT');
   });
 
   it('uses cautious alternate verification when no DOB is on file', () => {

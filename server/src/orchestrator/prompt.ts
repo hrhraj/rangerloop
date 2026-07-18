@@ -88,6 +88,8 @@ export function buildPatientPrompt(loop: Loop, slotIds: string[]): string {
     : `The date of birth on file is ${dob}. Ask the patient to state their full date of birth and compare it to the one on file. Do NOT say the date yourself or read it aloud. If it does not match, ask once more; if it still does not match, do not share any appointment details or slots - apologize that you can't verify their identity and end the call. Only offer slots after the stated date of birth matches.`;
   return `Call ${patient?.name ?? 'the patient'} on behalf of ${provider}'s office about scheduling follow-up imaging their doctor ordered.
 
+This is a live two-way phone call. Say ONE short turn at a time, then STOP and WAIT for the patient to reply before continuing - never say everything at once. Do NOT end the call until the patient has confirmed a specific appointment slot or clearly declined. If there is a brief silence, gently prompt again before ending.
+
 ${identityInstructions}
 
 After identity is verified, offer only these compliant slots: ${slotList || 'none supplied'}.

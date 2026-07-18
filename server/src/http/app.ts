@@ -6,6 +6,7 @@ import fastifyStatic from '@fastify/static';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { DemoMockClient } from '../askranger/demo-mock.js';
 import { HttpAskRangerClient } from '../askranger/http.js';
+import { HybridAskRangerClient } from '../askranger/hybrid.js';
 import type { AskRangerClient, CallEvent } from '../askranger/types.js';
 import type { Loop } from '../domain/types.js';
 import type { AbridgeEncounter } from '../extraction/encounter.js';
@@ -152,7 +153,7 @@ export function buildHttpApp(options: BuildHttpAppOptions): FastifyInstance {
 
 function requiredEnv(name: string): string {
   const value = process.env[name]?.trim();
-  if (value === undefined || value === '') throw new Error(`${name} is required in live mode`);
+  if (value === undefined || value === '') throw new Error(`${name} is required in live or hybrid mode`);
   return value;
 }
 
@@ -161,7 +162,7 @@ export function createProductionApp(options: {
   logger?: boolean;
 } = {}): { app: FastifyInstance; runtime: LoopRuntime } {
   const mode = process.env.ASKRANGER_MODE ?? 'mock';
-  if (mode !== 'mock' && mode !== 'live') throw new Error(`Invalid ASKRANGER_MODE: ${mode}`);
+  if (mode !== 'mock' && mode !== 'live' && mode !== 'hybrid') throw new Error(`Invalid ASKRANGER_MODE: ${mode}`);
 
   const webhookSecret = process.env.EXTERNAL_API_WEBHOOK_SECRET ?? 'dev-webhook-secret';
   const port = Number(process.env.PORT ?? 8080);
@@ -172,23 +173,32 @@ export function createProductionApp(options: {
   let roster: string[];
   let patientPhoneOverride: string | undefined;
 
-  if (mode === 'live') {
+  if (mode === 'live' || mode === 'hybrid') {
     const hostname = new URL(publicUrl).hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
-      throw new Error('ASKRANGER_MODE=live requires a public PUBLIC_URL');
+      throw new Error(`ASKRANGER_MODE=${mode} requires a public PUBLIC_URL`);
     }
-    roster = [
-      process.env.CENTER_COMPLIANT,
-      process.env.CENTER_NONCOMPLIANT,
-      process.env.CENTER_NOANSWER,
-    ].map((value) => value?.trim()).filter((value): value is string => value !== undefined && value !== '');
-    if (roster.length === 0) throw new Error('At least one center phone is required in live mode');
     patientPhoneOverride = process.env.PATIENT_PHONE?.trim() || undefined;
-    client = new HttpAskRangerClient({
+    const live = new HttpAskRangerClient({
       baseUrl: requiredEnv('ASKRANGER_BASE_URL'),
       apiKey: requiredEnv('ASKRANGER_API_KEY'),
       allowDeferredEndpointStubs: process.env.ALLOW_DEFERRED_ENDPOINT_STUBS === '1',
     });
+    if (mode === 'live') {
+      roster = [
+        process.env.CENTER_COMPLIANT,
+        process.env.CENTER_NONCOMPLIANT,
+        process.env.CENTER_NOANSWER,
+      ].map((value) => value?.trim()).filter((value): value is string => value !== undefined && value !== '');
+      if (roster.length === 0) throw new Error('At least one center phone is required in live mode');
+      client = live;
+    } else {
+      roster = ['center-noncompliant', 'center-no-answer', 'center-compliant'];
+      client = new HybridAskRangerClient({
+        mock: new DemoMockClient({ callbackUrl, webhookSecret }),
+        live,
+      });
+    }
   } else {
     roster = ['center-noncompliant', 'center-no-answer', 'center-compliant'];
     client = new DemoMockClient({ callbackUrl, webhookSecret });
