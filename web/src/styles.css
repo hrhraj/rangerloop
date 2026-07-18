@@ -223,3 +223,16 @@ body { margin: 0; font-family: var(--sans); color: var(--ink); background: var(-
 .context-grid > div { font-size: 0.82rem; display: flex; gap: 0.5rem; }
 .ck { flex: 0 0 92px; color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.03em; padding-top: 1px; }
 .cv { color: var(--ink); }
+
+/* ---------- call conversation (flowing text) ---------- */
+.conv { border: 1px solid var(--border); border-radius: 10px; background: #fff; margin: 0.2rem 0 0.7rem; overflow: hidden; }
+.conv-head { background: #f3f5f7; padding: 0.45rem 0.8rem; font-size: 0.8rem; font-weight: 700; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+.conv-live { font-size: 0.64rem; font-weight: 700; color: #a86612; background: #fff2dc; padding: 1px 7px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+.conv-body { padding: 0.65rem 0.85rem; display: flex; flex-direction: column; gap: 0.45rem; }
+.conv-turn { display: flex; gap: 0.6rem; font-size: 0.85rem; line-height: 1.45; animation: convIn 0.4s ease both; }
+.conv-turn.agent .conv-speaker { color: var(--indigo); }
+.conv-turn.other .conv-speaker { color: #2456a6; }
+.conv-turn.system { color: var(--muted); font-style: italic; }
+.conv-speaker { flex: 0 0 84px; font-weight: 700; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.02em; padding-top: 2px; }
+.conv-text { flex: 1; }
+@keyframes convIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }

@@ -33,6 +33,7 @@ export interface CallRecord {
   guardrail?: { profile: string | null; violations: string[]; flags: string[] };
   recordingUrl?: string;
   summary?: string;
+  transcript?: { speaker: string; text: string }[];
   startedAt: string;
   endedAt?: string;
 }

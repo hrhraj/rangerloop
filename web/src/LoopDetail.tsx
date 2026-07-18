@@ -36,6 +36,7 @@ export function LoopDetail({ loop, centers }: { loop: Loop; centers: ConfigCente
 
       <Stepper loop={loop} />
       <CampaignPanel loop={loop} centers={centers} />
+      <ConversationPanel loop={loop} centers={centers} />
 
       <div className="tabs">
         {(['timeline', 'evidence', 'fhir'] as Tab[]).map((t) => (
@@ -115,6 +116,31 @@ function CampaignPanel({ loop, centers }: { loop: Loop; centers: ConfigCenter[] 
               <div className="cc-name">{c.name}</div>
               <span className={`chip tone-${tone}`}>{label}</span>
               {slotText && <div className={`cc-slot ${struck ? 'struck' : ''}`}>{slotText}{struck ? ' · after due date' : ''}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ConversationPanel({ loop, centers }: { loop: Loop; centers: ConfigCenter[] }) {
+  const withT = [...loop.calls].reverse().find((c) => c.transcript && c.transcript.length > 0);
+  if (!withT?.transcript) return null;
+  const who = withT.target === 'patient'
+    ? 'Patient'
+    : (centers.find((c) => c.id === withT.centerId)?.name ?? 'Imaging center');
+  const active = withT.status !== 'completed' && withT.status !== 'failed';
+  return (
+    <div className="conv" key={withT.id}>
+      <div className="conv-head">📞 Call — {who}{active && <span className="conv-live">live</span>}</div>
+      <div className="conv-body">
+        {withT.transcript.map((t, i) => {
+          const kind = /agent/i.test(t.speaker) ? 'agent' : /system/i.test(t.speaker) ? 'system' : 'other';
+          return (
+            <div key={i} className={`conv-turn ${kind}`} style={{ animationDelay: `${i * 0.4}s` }}>
+              <span className="conv-speaker">{t.speaker}</span>
+              <span className="conv-text">{t.text}</span>
             </div>
           );
         })}
