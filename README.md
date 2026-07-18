@@ -7,8 +7,10 @@ ORDERED → SCHEDULED → escalate safely on failure.
 
 > Ambient AI captures the visit. RangerLoop gets it done.
 
-**Live demo:** https://rangerloop-api.fly.dev — click **"＋ Imaging order"** or **"Abridge encounter"**
-and watch a full loop run. The hosted demo runs in simulation mode, so it's phone-free and safe to click.
+**Live demo:** https://rangerloop-api.fly.dev — the board shows example loops across states. Click
+**"＋ Imaging order"** or **"Abridge encounter"** to run a fresh loop end-to-end (imaging-center calls are
+simulated; the patient leg places a real, guardrailed voice call).
+**Demo video:** https://www.loom.com/share/0d5d94ef03ba45988e6a5d908fa61913
 
 Built at the Abridge × Anthropic × Lightspeed healthcare hackathon (2026-07-18).
 
