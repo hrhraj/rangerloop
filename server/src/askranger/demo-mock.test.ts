@@ -50,6 +50,8 @@ describe('DemoMockClient conversations', () => {
     }
     const patientEvent = events.find(({ metadata }) => metadata.target === 'patient');
     const patientTranscript = JSON.stringify(patientEvent?.outcome?.captured.transcript).toLowerCase();
+    expect(patientTranscript).toContain('i can offer you an appointment on july 21, 2026');
+    expect(patientTranscript).not.toContain('center-compliant:2026-07-21');
     expect(patientTranscript).not.toMatch(/result|finding|diagnos/);
   });
 });

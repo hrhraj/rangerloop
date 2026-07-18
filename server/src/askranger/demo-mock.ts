@@ -9,6 +9,23 @@ import type {
 } from './types.js';
 import { signPayload } from '../http/signing.js';
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+] as const;
+
+function friendlyDate(isoDate: string): string {
+  const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match === null) return isoDate;
+  const [, year, monthText, dayText] = match;
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const monthName = MONTH_NAMES[month - 1];
+  return year === undefined || monthName === undefined || !Number.isInteger(day) || day < 1 || day > 31
+    ? isoDate
+    : `${monthName} ${day}, ${year}`;
+}
+
 export class DemoMockClient implements AskRangerClient {
   readonly #callbackUrl: string;
   readonly #webhookSecret: string;
@@ -87,13 +104,14 @@ export class DemoMockClient implements AskRangerClient {
           : new Date();
         date.setUTCDate(date.getUTCDate() + (typeof dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? 14 : 45));
         const earliestSlot = date.toISOString().slice(0, 10);
+        const displayDate = friendlyDate(earliestSlot);
         captured = {
           earliest_slot: earliestSlot,
           fax_needed: false,
           reference_number: `REF${sequence}`,
           transcript: [
             { speaker: 'Agent', text: 'I am calling to schedule physician-ordered follow-up imaging within the next two weeks.' },
-            { speaker: 'Imaging center', text: `Our earliest available appointment is ${earliestSlot}.` },
+            { speaker: 'Imaging center', text: `Our earliest available appointment is ${displayDate}.` },
             { speaker: 'Agent', text: 'That is past the requested due date, so I will try another imaging center.' },
             { speaker: 'Imaging center', text: 'Understood. Please call back if another date is needed.' },
           ],
@@ -102,6 +120,7 @@ export class DemoMockClient implements AskRangerClient {
         const date = new Date();
         date.setUTCDate(date.getUTCDate() + this.#dueOffsetDays);
         const earliestSlot = date.toISOString().slice(0, 10);
+        const displayDate = friendlyDate(earliestSlot);
         this.#slotByLoop.set(loopId, `${centerId}:${earliestSlot}`);
         captured = {
           earliest_slot: earliestSlot,
@@ -109,7 +128,7 @@ export class DemoMockClient implements AskRangerClient {
           reference_number: `REF${sequence}`,
           transcript: [
             { speaker: 'Agent', text: 'I am calling to schedule physician-ordered follow-up imaging. What is your earliest opening?' },
-            { speaker: 'Imaging center', text: `We have an opening on ${earliestSlot}.` },
+            { speaker: 'Imaging center', text: `We have an opening on ${displayDate}.` },
             { speaker: 'Agent', text: 'Please hold that appointment while I confirm it with the patient.' },
             { speaker: 'Imaging center', text: `It is on hold. Your reference number is REF${sequence}.` },
             { speaker: 'Agent', text: 'Thank you. I have noted the appointment and reference number.' },
@@ -118,6 +137,9 @@ export class DemoMockClient implements AskRangerClient {
       }
     } else {
       const accepted = typeof loopId === 'string' ? this.#slotByLoop.get(loopId) ?? '' : '';
+      const acceptedDate = accepted === ''
+        ? 'the available date'
+        : friendlyDate(accepted.slice(accepted.lastIndexOf(':') + 1));
       captured = {
         identity_verified: true,
         accepted_slot: accepted,
@@ -125,7 +147,7 @@ export class DemoMockClient implements AskRangerClient {
           { speaker: 'Agent', text: "Hello, I am calling on behalf of your provider's office about scheduling your ordered imaging." },
           { speaker: 'Agent', text: 'Before we discuss the appointment, please state your full date of birth.' },
           { speaker: 'Patient', text: 'March 22, 1979.' },
-          { speaker: 'Agent', text: `Thank you, your identity is verified. I can offer the appointment ${accepted}.` },
+          { speaker: 'Agent', text: `Thank you, your identity is verified. I can offer you an appointment on ${acceptedDate}.` },
           { speaker: 'Patient', text: 'Yes, that works for me.' },
           { speaker: 'Agent', text: 'You are confirmed. I will send the appointment details by text.' },
         ],
