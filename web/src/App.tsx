@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import {
   getLoops, getLoop, getEscalations,
+  createLoopFromOrder, createLoopFromEncounter, getSampleEncounter, DEFAULT_ORDER_TEXT,
   type Loop, type LoopSummary, type EscalationRow,
 } from './api';
 import { LoopDetail } from './LoopDetail';
@@ -27,10 +28,12 @@ function usePoll<T>(fn: () => Promise<T>, enabled: boolean, key: string): T | nu
 }
 
 type View = 'loops' | 'escalations';
+type Creating = 'order' | 'encounter' | null;
 
 export function App() {
   const [view, setView] = useState<View>('loops');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [creating, setCreating] = useState<Creating>(null);
 
   const loops = usePoll<LoopSummary[]>(getLoops, true, 'loops') ?? [];
   const selected = usePoll<Loop>(
@@ -45,6 +48,22 @@ export function App() {
   }, [loops, selectedId]);
 
   const escalationCount = loops.reduce((n, l) => n + l.escalationCount, 0);
+
+  async function startOrder() {
+    setCreating('order');
+    try {
+      const r = await createLoopFromOrder(DEFAULT_ORDER_TEXT);
+      setView('loops'); setSelectedId(r.loopId);
+    } catch { /* ignore */ } finally { setCreating(null); }
+  }
+  async function startEncounter() {
+    setCreating('encounter');
+    try {
+      const enc = await getSampleEncounter();
+      const r = await createLoopFromEncounter(enc);
+      setView('loops'); setSelectedId(r.loopId);
+    } catch { /* ignore */ } finally { setCreating(null); }
+  }
 
   return (
     <div className="app">
@@ -61,35 +80,46 @@ export function App() {
             Escalations <span className="count">{escalationCount}</span>
           </button>
         </nav>
+        <div className="actions">
+          <button className="btn primary" disabled={creating !== null} onClick={startOrder}>
+            {creating === 'order' ? 'Starting…' : '＋ Imaging order'}
+          </button>
+          <button className="btn" disabled={creating !== null} onClick={startEncounter}>
+            {creating === 'encounter' ? 'Loading…' : 'Abridge encounter'}
+          </button>
+        </div>
         <div className="live"><span className="dot" /> live · 2s</div>
       </header>
 
       {view === 'loops' ? (
-        <main className="split">
-          <aside className="board">
-            {loops.length === 0 && <div className="empty">No loops yet. POST an order to <code>/api/loops</code>.</div>}
-            {loops.map((l) => (
-              <button
-                key={l.id}
-                className={`board-item ${l.id === selectedId ? 'selected' : ''}`}
-                onClick={() => setSelectedId(l.id)}
-              >
-                <div className="board-item-top">
-                  <StateChip state={l.state} />
-                  {l.escalationCount > 0 && <span className="esc-dot" title="escalated" />}
-                </div>
-                <div className="board-item-name">{l.patientName ?? 'Unknown patient'}</div>
-                <div className="board-item-study">{l.study ?? '—'}</div>
-                <div className="board-item-meta">
-                  due {fmtDate(l.dueDate)} · {l.centersTried} call(s) · {l.slotsFound} slot(s)
-                </div>
-              </button>
-            ))}
-          </aside>
-          <section className="detail">
-            {selected ? <LoopDetail loop={selected} /> : <div className="empty">Select a loop.</div>}
-          </section>
-        </main>
+        loops.length === 0 ? (
+          <Hero onOrder={startOrder} onEncounter={startEncounter} creating={creating} />
+        ) : (
+          <main className="split">
+            <aside className="board">
+              {loops.map((l) => (
+                <button
+                  key={l.id}
+                  className={`board-item ${l.id === selectedId ? 'selected' : ''}`}
+                  onClick={() => setSelectedId(l.id)}
+                >
+                  <div className="board-item-top">
+                    <StateChip state={l.state} />
+                    {l.escalationCount > 0 && <span className="esc-dot" title="escalated" />}
+                  </div>
+                  <div className="board-item-name">{l.patientName ?? 'Unknown patient'}</div>
+                  <div className="board-item-study">{l.study ?? '—'}</div>
+                  <div className="board-item-meta">
+                    due {fmtDate(l.dueDate)} · {l.centersTried} call(s) · {l.slotsFound} slot(s)
+                  </div>
+                </button>
+              ))}
+            </aside>
+            <section className="detail">
+              {selected ? <LoopDetail loop={selected} /> : <div className="empty">Select a loop.</div>}
+            </section>
+          </main>
+        )
       ) : (
         <main className="single">
           <EscalationQueue
@@ -98,6 +128,44 @@ export function App() {
           />
         </main>
       )}
+    </div>
+  );
+}
+
+function Hero({ onOrder, onEncounter, creating }: {
+  onOrder: () => void;
+  onEncounter: () => void;
+  creating: Creating;
+}) {
+  const stages = ['Ordered', 'Extracted', 'Call centers', 'Compliant slot', 'Call patient', 'Scheduled'];
+  return (
+    <div className="hero">
+      <div className="hero-inner">
+        <div className="hero-kicker">CLOSED-LOOP CARE EXECUTION</div>
+        <h1 className="hero-title">Every other agent summarizes. RangerLoop does the job.</h1>
+        <p className="hero-sub">
+          From a signed imaging order to a booked appointment — extracted with evidence, called
+          through, guardrailed, and tracked ORDERED → SCHEDULED. Claude decides each next step; a
+          deterministic policy layer decides whether it's allowed.
+        </p>
+        <div className="hero-pipeline">
+          {stages.map((s, i) => (
+            <Fragment key={s}>
+              <span className="hp-stage"><span className="hp-dot" />{s}</span>
+              {i < stages.length - 1 && <span className="hp-arrow">→</span>}
+            </Fragment>
+          ))}
+        </div>
+        <div className="hero-cta">
+          <button className="btn primary lg" disabled={creating !== null} onClick={onOrder}>
+            {creating === 'order' ? 'Starting…' : '＋ Start from an imaging order'}
+          </button>
+          <button className="btn lg" disabled={creating !== null} onClick={onEncounter}>
+            {creating === 'encounter' ? 'Loading…' : 'Start from an Abridge encounter'}
+          </button>
+        </div>
+        <div className="hero-note">In live mode this places real phone calls to imaging centers and the patient.</div>
+      </div>
     </div>
   );
 }

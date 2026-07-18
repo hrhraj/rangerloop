@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fastifyStatic from '@fastify/static';
@@ -7,6 +8,7 @@ import { DemoMockClient } from '../askranger/demo-mock.js';
 import { HttpAskRangerClient } from '../askranger/http.js';
 import type { AskRangerClient, CallEvent } from '../askranger/types.js';
 import type { Loop } from '../domain/types.js';
+import type { AbridgeEncounter } from '../extraction/encounter.js';
 import { ClaudeDecider } from '../orchestrator/claude-decider.js';
 import type { Decider } from '../orchestrator/decider.js';
 import type { OrchestratorDeps } from '../orchestrator/engine.js';
@@ -68,17 +70,34 @@ export function buildHttpApp(options: BuildHttpAppOptions): FastifyInstance {
   });
 
   app.post('/api/loops', async (request, reply) => {
-    let body: { documentText?: string };
+    let body: { documentText?: string; encounter?: AbridgeEncounter };
     try {
       body = parseJsonBody(request.body);
     } catch {
       return await reply.code(400).send({ error: 'invalid JSON body' });
     }
-    if (body.documentText === undefined || body.documentText.trim() === '') {
-      return await reply.code(400).send({ error: 'documentText is required' });
+    let loop: Loop;
+    if (typeof body.encounter === 'object' && body.encounter !== null && !Array.isArray(body.encounter)) {
+      loop = await options.runtime.startEncounter(body.encounter);
+    } else {
+      if (body.documentText === undefined || body.documentText.trim() === '') {
+        return await reply.code(400).send({ error: 'documentText or encounter is required' });
+      }
+      loop = await options.runtime.startLoop(body.documentText);
     }
-    const loop = await options.runtime.startLoop(body.documentText);
     return await reply.code(202).send({ loopId: loop.id, state: loop.state });
+  });
+
+  app.get('/api/sample-encounter', async (_request, reply) => {
+    const fixturePath = resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      '../../../fixtures/abridge-encounter-mammogram.json',
+    );
+    try {
+      return JSON.parse(await readFile(fixturePath, 'utf8')) as unknown;
+    } catch {
+      return await reply.code(500).send({ error: 'sample encounter unavailable' });
+    }
   });
 
   app.get('/api/loops', async () => options.runtime.store.getAll().map(loopSummary));

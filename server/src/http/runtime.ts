@@ -2,6 +2,8 @@ import type { CallEvent, CallOutcome } from '../askranger/types.js';
 import { store as defaultStore } from '../domain/store.js';
 import type { CallRecord, Loop } from '../domain/types.js';
 import { ingestOrder as defaultIngestOrder } from '../extraction/ingest.js';
+import { ingestEncounter as defaultIngestEncounter } from '../extraction/ingest.js';
+import type { AbridgeEncounter } from '../extraction/encounter.js';
 import { advance, onCallOutcome, type OrchestratorDeps } from '../orchestrator/engine.js';
 
 export const RECONCILE_AFTER_MS = 8_000;
@@ -16,6 +18,7 @@ export interface LoopRuntimeOptions {
   webhookSecret: string;
   store?: RuntimeStore;
   ingestOrder?: (documentText: string) => Promise<Loop>;
+  ingestEncounter?: (encounter: AbridgeEncounter) => Promise<Loop>;
   reconcileAfterMs?: number;
   reconcileIntervalMs?: number;
   log?: (message: string) => void;
@@ -42,6 +45,7 @@ export class LoopRuntime {
   readonly store: RuntimeStore;
   readonly webhookSecret: string;
   readonly #ingestOrder: (documentText: string) => Promise<Loop>;
+  readonly #ingestEncounter: (encounter: AbridgeEncounter) => Promise<Loop>;
   readonly #reconcileAfterMs: number;
   readonly #reconcileIntervalMs: number;
   readonly #log: (message: string) => void;
@@ -54,6 +58,7 @@ export class LoopRuntime {
     this.store = opts.store ?? defaultStore;
     this.webhookSecret = opts.webhookSecret;
     this.#ingestOrder = opts.ingestOrder ?? defaultIngestOrder;
+    this.#ingestEncounter = opts.ingestEncounter ?? defaultIngestEncounter;
     this.#reconcileAfterMs = opts.reconcileAfterMs ?? RECONCILE_AFTER_MS;
     this.#reconcileIntervalMs = opts.reconcileIntervalMs ?? RECONCILE_AFTER_MS;
     this.#log = opts.log ?? ((message) => console.warn(message));
@@ -61,6 +66,16 @@ export class LoopRuntime {
 
   async startLoop(documentText: string): Promise<Loop> {
     let loop = await this.#ingestOrder(documentText);
+    return await this.#start(loop);
+  }
+
+  async startEncounter(encounter: AbridgeEncounter): Promise<Loop> {
+    const loop = await this.#ingestEncounter(encounter);
+    return await this.#start(loop);
+  }
+
+  async #start(initialLoop: Loop): Promise<Loop> {
+    let loop = initialLoop;
     this.store.save(loop);
     if (loop.state === 'EXTRACTED') {
       const step = await advance(loop, this.deps);

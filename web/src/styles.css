@@ -171,3 +171,26 @@ body { margin: 0; font-family: var(--sans); color: var(--ink); background: var(-
 .esc-table tr:last-child td { border-bottom: none; }
 .esc-table .ctx { color: var(--ink-2); max-width: 340px; }
 .link { background: none; border: none; color: #2456a6; cursor: pointer; font-size: 0.82rem; padding: 0; }
+
+/* ---------- actions + buttons ---------- */
+.actions { margin-left: auto; display: flex; gap: 0.5rem; }
+.live { margin-left: 1rem; }
+.btn { border: 1px solid var(--border-strong); background: #fff; color: var(--ink); padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 600; }
+.btn:hover:not(:disabled) { background: #f5f6f8; }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn.primary:hover:not(:disabled) { background: #c53d25; }
+.btn.lg { padding: 0.6rem 1.15rem; font-size: 0.9rem; }
+
+/* ---------- hero (empty state) ---------- */
+.hero { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+.hero-inner { max-width: 720px; text-align: center; }
+.hero-kicker { font-size: 0.72rem; letter-spacing: 0.14em; color: var(--brand); font-weight: 700; }
+.hero-title { font-family: var(--serif); font-size: 2.05rem; line-height: 1.14; margin: 0.6rem 0 0.85rem; font-weight: 600; letter-spacing: -0.01em; }
+.hero-sub { color: var(--ink-2); font-size: 0.95rem; line-height: 1.6; margin: 0 auto 1.6rem; max-width: 640px; }
+.hero-pipeline { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.4rem 0.5rem; margin-bottom: 1.8rem; }
+.hp-stage { display: inline-flex; align-items: center; gap: 0.4rem; background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 0.3rem 0.75rem; font-size: 0.78rem; color: var(--ink-2); }
+.hp-dot { width: 8px; height: 8px; border-radius: 50%; background: #0f7a53; }
+.hp-arrow { color: var(--muted); }
+.hero-cta { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+.hero-note { margin-top: 1.05rem; font-size: 0.75rem; color: var(--muted); }

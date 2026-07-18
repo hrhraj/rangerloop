@@ -22,6 +22,7 @@ export type LoopAction =
   | { type: 'INBOUND_ARMED'; expectationId: string }
   | { type: 'CALL_LINKED'; callId: string; externalCallId: string }
   | { type: 'TIMELINE_NOTE'; noteType: string; summary: string; reasoning?: string }
+  | { type: 'ATTACH_ENCOUNTER'; encounter: NonNullable<Loop['encounter']> }
   | { type: 'SCHEDULED'; centerId: string; slotId: string }
   | { type: 'ESCALATED'; reason: EscalationReason; context: string };
 
@@ -262,6 +263,19 @@ export function reduce(loop: Loop, action: LoopAction): Loop {
             ...timelineEvent(action.noteType, action.summary),
             ...(action.reasoning === undefined ? {} : { reasoning: action.reasoning }),
           },
+        ],
+        updatedAt: now,
+      };
+    case 'ATTACH_ENCOUNTER':
+      return {
+        ...loop,
+        encounter: action.encounter,
+        timeline: [
+          ...loop.timeline,
+          timelineEvent(
+            'encounter_attached',
+            `Ambient encounter attached${action.encounter.title === undefined ? '' : `: ${action.encounter.title}`}`,
+          ),
         ],
         updatedAt: now,
       };

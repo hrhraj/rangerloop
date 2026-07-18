@@ -124,3 +124,32 @@ async function getJson<T>(path: string): Promise<T> {
 export const getLoops = () => getJson<LoopSummary[]>('/api/loops');
 export const getLoop = (id: string) => getJson<Loop>(`/api/loops/${encodeURIComponent(id)}`);
 export const getEscalations = () => getJson<EscalationRow[]>('/api/escalations');
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return (await res.json()) as T;
+}
+
+export interface CreatedLoop { loopId: string; state: LoopState }
+export const createLoopFromOrder = (documentText: string) =>
+  postJson<CreatedLoop>('/api/loops', { documentText });
+export const getSampleEncounter = () => getJson<unknown>('/api/sample-encounter');
+export const createLoopFromEncounter = (encounter: unknown) =>
+  postJson<CreatedLoop>('/api/loops', { encounter });
+
+export const DEFAULT_ORDER_TEXT = `MEMORIAL RADIOLOGY ASSOCIATES — IMAGING ORDER
+Date signed: 2026-07-18
+Ordering provider: Dr. Alicia Reyes, Bay Valley Primary Care (callback: 510-555-0148)
+Patient: Jordan Whitfield
+DOB: 1979-03-22
+Phone: +14088873921
+Preferred language: English
+Study ordered: Diagnostic mammogram, left breast
+Reason: follow-up of an abnormal screening finding (BI-RADS 0)
+Clinical urgency: Please schedule the diagnostic mammogram within two weeks of this order.
+Electronically signed by Dr. Alicia Reyes, MD on 2026-07-18.`;

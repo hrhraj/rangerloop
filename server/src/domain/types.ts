@@ -128,6 +128,11 @@ export interface Loop {
   calls: CallRecord[];
   slots: FoundSlot[];
   escalations: Escalation[];
+  encounter?: {
+    title?: string;
+    date?: string;
+    transcript: { speaker: string; text: string; isEvidence?: boolean }[];
+  };
   createdAt: string;
   updatedAt: string;
 }
